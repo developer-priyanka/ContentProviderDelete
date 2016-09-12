@@ -26,7 +26,9 @@ public class MainActivity extends AppCompatActivity {
     Contact contact;
     ArrayList<String>namelist=new ArrayList<String>();
     ArrayList<Contact>contactlist=new ArrayList<Contact>();
-    String name;
+    String name,number;
+    ArrayAdapter<String> adapter;
+    int selectedIndex;
 
     private static final int PERMISSIONS_REQUEST_READ_CONTTACTS =100;
     private static final int PERMISSIONS_REQUEST_WRITE_CONTTACTS =200;
@@ -65,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                  name=adapterView.getItemAtPosition(i).toString();
+                selectedIndex=i;
                 for(int j=0;j<contactlist.size();j++){
                     if(name.equals(contactlist.get(j).getName()))
                     edTxt.setText(contactlist.get(j).getPhone());
@@ -88,6 +91,15 @@ public class MainActivity extends AppCompatActivity {
             updateContact();
         }
 
+    }
+
+    public void delete(View view){
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.WRITE_CONTACTS)!= PackageManager.PERMISSION_GRANTED){
+            requestPermissions(new String[]{android.Manifest.permission.WRITE_CONTACTS},PERMISSIONS_REQUEST_WRITE_CONTTACTS);
+        }else {
+
+            deleteContact();
+        }
     }
 
     public void readContact(){
@@ -126,6 +138,34 @@ public class MainActivity extends AppCompatActivity {
             Log.e("Update Contact", e.getMessage());
         }
         readContact();
+    }
+
+    public void deleteContact(){
+        number=edTxt.getText().toString();
+        String where=ContactsContract.CommonDataKinds.Phone.NUMBER +" = ? AND "+
+                ContactsContract.Data.MIMETYPE+" = ? AND "+
+                String.valueOf(ContactsContract.CommonDataKinds.Phone.TYPE) +" = ?";
+
+            String[] params = new String[]{number,ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,String.valueOf(ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE)};
+            ArrayList<ContentProviderOperation> ops=new ArrayList<ContentProviderOperation>();
+        ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+        .withSelection(where,params)
+        .build());
+
+
+        try {
+            getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+            Toast.makeText(this, "Contact's Number Deleted.", Toast.LENGTH_SHORT).show();
+
+
+        } catch (Exception e) {
+            Log.e("Delete Contact", e.getMessage());
+        }
+        edTxt.setText("");
+        namelist.remove(selectedIndex);
+        adapter.notifyDataSetChanged();
+        spinner.setSelection(0);
+
     }
 
     @Override

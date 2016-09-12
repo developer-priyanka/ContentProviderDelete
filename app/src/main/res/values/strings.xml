@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">ContactUpdate</string>
+    <string name="app_name">ContactUpdateDelete</string>
     <string name="spinner_title">Select Contact Name</string>
 </resources>
